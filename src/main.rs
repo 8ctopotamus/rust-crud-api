@@ -44,9 +44,54 @@ fn main() {
     }
 }
 
-fn handle_client(stream: TcpStream) {
+fn handle_client(mut stream: TcpStream) {
+    let mut buffer = [0, 1024];
+    let mut request = String::new();
+
+    match stream.read(&mut buffer) {
+        Ok(size) => {
+            request.push_str(String::from_utf8_lossy(&buffer[..size]).as_ref());
+
+            let (status_line, content) = match &*request {
+                r if r.starts_with("POST /users") => handle_post_request(r),
+                r if r.starts_with("GET /users/") => handle_get_request(r),
+                r if r.starts_with("GET /users") => handle_get_all_request(r),
+                r if r.starts_with("PUT /users/") => handle_put_request(r),
+                r if r.starts_with("DELETE /users/") => handle_delete_request(r),
+                _ => (NOT_FOUND.to_string(), "404 Not Found".to_string()),
+            };
+
+            stream.write_all(format!("{}{}", status_line, content).as_bytes()).unwrap()
+        }
+        Err(e) => {
+            println!("Error {}", e);
+        }
+    }
+}
+
+// controllers
+
+fn handle_post_request(s: &str) {
+    
+}
+
+fn handle_get_request(s: &str) {
 
 }
+
+fn handle_get_all_request(s: &str) {
+
+}
+
+fn handle_put_request(s: &str) {
+
+}
+
+fn handle_delete_request(s: &str) {
+
+}
+
+// db
 
 fn set_database() -> Result<(), PostgresError> {
     // connect db
@@ -62,6 +107,9 @@ fn set_database() -> Result<(), PostgresError> {
     Ok(())
 }
 
+// helpers
+
+// get id from url
 fn get_id(request: &str) -> &str {
     return request.split("/").nth(2).unwrap_or_default().split_whitespace().next().unwrap_or_default()
 }
